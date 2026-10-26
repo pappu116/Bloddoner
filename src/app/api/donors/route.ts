@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { BLOOD_GROUPS } from "@/lib/blood-data";
-import { normalizeLocation, requireAdmin } from "@/lib/server-utils";
+import { BLOOD_GROUPS, normalizeLocation } from "@/lib/blood-data";
+import { requireAdmin } from "@/lib/server-utils";
 
 const donorSchema = z.object({
   name: z.string().min(2).max(80),
@@ -14,7 +14,6 @@ const donorSchema = z.object({
   available: z.boolean().optional(),
 });
 
-// GET /api/donors?bloodGroup=&district=&search=&available=
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const bloodGroup = sp.get("bloodGroup") || undefined;
@@ -43,7 +42,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ donors: filtered });
 }
 
-// POST /api/donors — register as donor
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = donorSchema.safeParse(body);
@@ -65,7 +63,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ donor }, { status: 201 });
 }
 
-// DELETE /api/donors?id=xxx (admin)
+// admin only
 export async function DELETE(req: NextRequest) {
   if (!requireAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const id = req.nextUrl.searchParams.get("id");

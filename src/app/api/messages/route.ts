@@ -10,14 +10,13 @@ const messageSchema = z.object({
   content: z.string().min(2).max(1000),
 });
 
-// GET /api/messages (admin)
+// GET is admin only, POST is the public contact form
 export async function GET(req: NextRequest) {
   if (!requireAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const messages = await db.message.findMany({ orderBy: { createdAt: "desc" } });
   return NextResponse.json({ messages });
 }
 
-// POST /api/messages — public contact form / donor messaging
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = messageSchema.safeParse(body);

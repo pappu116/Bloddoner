@@ -7,7 +7,6 @@ const patchSchema = z.object({
   status: z.enum(["OPEN", "FULFILLED"]),
 });
 
-// PATCH /api/requests/[id] — mark fulfilled (owner or admin)
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const body = await req.json().catch(() => null);
@@ -21,7 +20,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   return NextResponse.json({ request });
 }
 
-// DELETE /api/requests/[id] (admin)
+// admin only
 export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   if (!requireAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await ctx.params;

@@ -7,10 +7,7 @@ export const DISTRICTS = [
   "Kushtia", "Patuakhali", "Pabna", "Jamalpur", "Chandpur", "Brahmanbaria",
 ] as const;
 
-/**
- * Blood compatibility: for a requested recipient group,
- * which donor groups can safely donate?
- */
+// for a requested group, which donor groups can safely give blood
 export const COMPATIBILITY: Record<string, string[]> = {
   "A+": ["A+", "A-", "O+", "O-"],
   "A-": ["A-", "O-"],

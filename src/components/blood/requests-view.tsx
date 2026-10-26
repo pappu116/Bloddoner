@@ -34,7 +34,6 @@ export function RequestsView() {
   const [donateFor, setDonateFor] = useState<BloodRequest | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // post form state
   const [form, setForm] = useState({
     patientName: "", bloodGroup: "", district: "", hospital: "",
     urgency: "URGENT", units: "1", neededBy: "", contactName: "", phone: "", note: "",
@@ -107,7 +106,6 @@ export function RequestsView() {
         </Button>
       </div>
 
-      {/* Filters */}
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -137,7 +135,6 @@ export function RequestsView() {
         </Select>
       </div>
 
-      {/* List */}
       {requests === null ? (
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -219,7 +216,6 @@ export function RequestsView() {
         </div>
       )}
 
-      {/* Post request dialog */}
       <Dialog open={postOpen} onOpenChange={setPostOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto border-border bg-card sm:max-w-lg">
           <DialogHeader>

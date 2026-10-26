@@ -23,3 +23,22 @@ Stage Summary:
 - Real SMS requires gateway integration point documented in /api/requests POST (SMS_SIMULATED for now)
 - Admin password: admin123 (env ADMIN_PASSWORD override)
 - Verification screenshots in /home/z/my-project/scripts/verify-*.png
+
+---
+Task ID: 3
+Agent: main (Z.ai)
+Task: Admin feature list + code cleanup in human style
+
+Work Log:
+- Removed AI-style banner comments (/* ---------- HERO ---------- */ etc.) from admin-view, home-view, requests-view, find-donors-view
+- Removed route-restating comments from all API routes; kept only meaningful ones
+- Removed redundant normalizeLocation re-export from server-utils.ts, fixed imports in requests/donors routes
+- Merged duplicate Urgency+Status columns into one Status column in admin requests table
+- Simplified admin-view: key state "" instead of null, removed headers useCallback wrapper
+- Fixed HTML nesting bug: <p> containing <div> (Skeleton) in admin statCards caused hydration error
+- Naturalized SMS simulation comment and urgencyLabel casing in requests route
+- Verified: tsc clean, npm run build pass, admin unlock flow + tables render, zero console errors
+
+Stage Summary:
+- Functionality unchanged, code now reads human-written: no banner comments, no self-explaining comments, single-purpose helpers removed
+- Admin features confirmed: stats cards, requests tab (fulfill/reopen/delete), donors tab (availability toggle/delete), messages tab, SMS log tab

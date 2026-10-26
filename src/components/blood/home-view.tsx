@@ -73,7 +73,6 @@ export function HomeView({ onNavigate }: HomeViewProps) {
 
   return (
     <div>
-      {/* ---------- HERO ---------- */}
       <section className="hero-glow bg-tech-grid relative overflow-hidden">
         {DROP_POSITIONS.map((p, i) => (
           <Droplet
@@ -127,7 +126,6 @@ export function HomeView({ onNavigate }: HomeViewProps) {
         </div>
       </section>
 
-      {/* ---------- STATS ---------- */}
       <section className="border-y border-border/60 bg-card/30">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px lg:grid-cols-4">
           {statCards.map((s) => (
@@ -143,7 +141,6 @@ export function HomeView({ onNavigate }: HomeViewProps) {
         </div>
       </section>
 
-      {/* ---------- HOW IT WORKS ---------- */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <h2 className="text-center text-3xl font-bold tracking-tight">How it works</h2>
         <p className="mx-auto mt-2 max-w-xl text-center text-sm text-zinc-400">
@@ -172,7 +169,6 @@ export function HomeView({ onNavigate }: HomeViewProps) {
         </div>
       </section>
 
-      {/* ---------- URGENT REQUESTS ---------- */}
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
         <div className="flex items-end justify-between">
           <div>
@@ -216,7 +212,6 @@ export function HomeView({ onNavigate }: HomeViewProps) {
         </div>
       </section>
 
-      {/* ---------- CTA BANNER ---------- */}
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
         <div className="card-glow relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/15 via-card to-card p-8 text-center sm:p-12">
           <HeartPulse className="mx-auto h-10 w-10 text-primary" />

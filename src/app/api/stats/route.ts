@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// GET /api/stats — public homepage stats
 export async function GET() {
   const [donors, availableDonors, openRequests, fulfilledRequests, notificationsSent, messages] =
     await Promise.all([

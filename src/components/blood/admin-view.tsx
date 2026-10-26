@@ -27,7 +27,7 @@ import { format, formatDistanceToNow } from "date-fns";
 
 export function AdminView() {
   const { toast } = useToast();
-  const [key, setKey] = useState<string | null>(null);
+  const [key, setKey] = useState("");
   const [password, setPassword] = useState("");
   const [unlocking, setUnlocking] = useState(false);
 
@@ -38,11 +38,9 @@ export function AdminView() {
   const [smsLog, setSmsLog] = useState<DonorNotification[] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "request" | "donor"; id: string; label: string } | null>(null);
 
-  const headers = useCallback((): HeadersInit => ({ "x-admin-key": key ?? "" }), [key]);
-
   const loadAll = useCallback(async () => {
     if (!key) return;
-    const h = headers();
+    const h = { "x-admin-key": key };
     const [s, r, d, m, n] = await Promise.all([
       fetch("/api/stats").then((x) => x.json()),
       fetch("/api/requests?status=all").then((x) => x.json()),
@@ -55,7 +53,7 @@ export function AdminView() {
     setDonors(d.donors ?? []);
     setMessages(m.messages ?? []);
     setSmsLog(n.notifications ?? []);
-  }, [key, headers]);
+  }, [key]);
 
   useEffect(() => {
     loadAll();
@@ -85,7 +83,7 @@ export function AdminView() {
     const next = r.status === "OPEN" ? "FULFILLED" : "OPEN";
     await fetch(`/api/requests/${r.id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-admin-key": key ?? "" },
+      headers: { "Content-Type": "application/json", "x-admin-key": key },
       body: JSON.stringify({ status: next }),
     });
     toast({ title: next === "FULFILLED" ? "Marked as fulfilled" : "Reopened request" });
@@ -95,7 +93,7 @@ export function AdminView() {
   const toggleDonor = async (d: Donor) => {
     await fetch("/api/admin", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-admin-key": key ?? "" },
+      headers: { "Content-Type": "application/json", "x-admin-key": key },
       body: JSON.stringify({ donorId: d.id, available: !d.available }),
     });
     toast({ title: d.available ? "Donor set unavailable" : "Donor set available" });
@@ -105,13 +103,12 @@ export function AdminView() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     const url = deleteTarget.type === "request" ? `/api/requests/${deleteTarget.id}` : `/api/donors?id=${deleteTarget.id}`;
-    await fetch(url, { method: "DELETE", headers: { "x-admin-key": key ?? "" } });
+    await fetch(url, { method: "DELETE", headers: { "x-admin-key": key } });
     toast({ title: "Deleted", description: deleteTarget.label });
     setDeleteTarget(null);
     loadAll();
   };
 
-  /* ---------- password gate ---------- */
   if (!key) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center px-4 py-24">
@@ -145,7 +142,6 @@ export function AdminView() {
     );
   }
 
-  /* ---------- dashboard ---------- */
   const statCards = [
     { label: "Donors", value: stats?.donors },
     { label: "Available now", value: stats?.availableDonors },
@@ -166,9 +162,9 @@ export function AdminView() {
           <Card key={s.label} className="border-border/70 bg-card/60">
             <CardContent className="p-4">
               <p className="text-xs font-medium text-zinc-400">{s.label}</p>
-              <p className="mt-1 text-2xl font-extrabold tabular-nums">
+              <div className="mt-1 text-2xl font-extrabold tabular-nums">
                 {s.value === undefined ? <Skeleton className="h-7 w-10" /> : s.value}
-              </p>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -182,7 +178,6 @@ export function AdminView() {
           <TabsTrigger value="sms"><Smartphone className="mr-1.5 h-4 w-4" />SMS Log</TabsTrigger>
         </TabsList>
 
-        {/* Requests */}
         <TabsContent value="requests">
           <Card className="border-border/70 bg-card/60">
             <CardContent className="max-h-[32rem] overflow-auto p-0">
@@ -195,7 +190,6 @@ export function AdminView() {
                       <TableHead>Patient</TableHead>
                       <TableHead>Group</TableHead>
                       <TableHead>Location</TableHead>
-                      <TableHead>Urgency</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Posted</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -208,11 +202,14 @@ export function AdminView() {
                         <TableCell><Badge className="bg-primary text-primary-foreground">{r.bloodGroup}</Badge></TableCell>
                         <TableCell className="text-zinc-400">{r.district}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={r.status === "FULFILLED" ? "border-emerald-500/40 text-emerald-400" : URGENCY[r.urgency]?.className}>
-                            {r.status === "FULFILLED" ? "Done" : URGENCY[r.urgency]?.label}
-                          </Badge>
+                          {r.status === "FULFILLED" ? (
+                            <Badge variant="outline" className="border-emerald-500/40 text-emerald-400">Fulfilled</Badge>
+                          ) : (
+                            <Badge variant="outline" className={URGENCY[r.urgency]?.className}>
+                              {URGENCY[r.urgency]?.label ?? r.urgency}
+                            </Badge>
+                          )}
                         </TableCell>
-                        <TableCell className="text-zinc-400">{r.status === "OPEN" ? "Open" : "Fulfilled"}</TableCell>
                         <TableCell className="text-xs text-zinc-500">{formatDistanceToNow(new Date(r.createdAt), { addSuffix: true })}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
@@ -233,7 +230,6 @@ export function AdminView() {
           </Card>
         </TabsContent>
 
-        {/* Donors */}
         <TabsContent value="donors">
           <Card className="border-border/70 bg-card/60">
             <CardContent className="max-h-[32rem] overflow-auto p-0">
@@ -275,7 +271,6 @@ export function AdminView() {
           </Card>
         </TabsContent>
 
-        {/* Messages */}
         <TabsContent value="messages">
           {messages === null ? (
             <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>
@@ -299,7 +294,6 @@ export function AdminView() {
           )}
         </TabsContent>
 
-        {/* SMS log */}
         <TabsContent value="sms">
           <Card className="border-border/70 bg-card/60">
             <CardContent className="p-5">

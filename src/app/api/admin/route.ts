@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { ADMIN_PASSWORD } from "@/lib/blood-data";
 import { requireAdmin } from "@/lib/server-utils";
 
-// POST /api/admin — verify admin password
+// POST — check password, returns the key the panel uses on every admin call
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = z.object({ password: z.string() }).safeParse(body);
@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, key: ADMIN_PASSWORD });
 }
 
-// PATCH /api/requests handled in its own route; here: admin donor availability toggle
 export async function PATCH(req: NextRequest) {
   if (!requireAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => null);

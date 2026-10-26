@@ -70,7 +70,6 @@ export function FindDonorsView({ onNavigate }: FindDonorsViewProps) {
         </Button>
       </div>
 
-      {/* Filters */}
       <Card className="mt-6 border-border/70 bg-card/60">
         <CardContent className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-end">
           <div className="grid flex-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -122,7 +121,6 @@ export function FindDonorsView({ onNavigate }: FindDonorsViewProps) {
         </CardContent>
       </Card>
 
-      {/* Results */}
       {donors === null ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (

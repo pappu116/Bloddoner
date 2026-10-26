@@ -3,8 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { normalizePhone, requireAdmin } from "@/lib/server-utils";
 
-// GET /api/notifications?phone=01xxxxxxxxx   → donor inbox
-// GET /api/notifications?all=1               → admin SMS log
+// GET ?phone=… for a donor's inbox, ?all=1 for the admin SMS log
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
 
@@ -42,7 +41,6 @@ const patchSchema = z.object({
   all: z.boolean().optional(),
 });
 
-// PATCH /api/notifications — mark as read
 export async function PATCH(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = patchSchema.safeParse(body);

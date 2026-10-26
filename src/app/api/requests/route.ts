@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { BLOOD_GROUPS, compatibleDonorGroups } from "@/lib/blood-data";
-import { normalizeLocation, requireAdmin } from "@/lib/server-utils";
+import { BLOOD_GROUPS, compatibleDonorGroups, normalizeLocation } from "@/lib/blood-data";
+import { requireAdmin } from "@/lib/server-utils";
 
 const requestSchema = z.object({
   patientName: z.string().min(2).max(80),
@@ -17,7 +17,7 @@ const requestSchema = z.object({
   neededBy: z.string().optional().nullable(),
 });
 
-// GET /api/requests?status=&bloodGroup=&district=
+// district is matched loosely (case/spacing), so it's filtered after the query
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const status = sp.get("status");
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ requests: filtered });
 }
 
-// POST /api/requests — create request + notify matching donors (location + blood group wise)
+// POST — creates the request and alerts compatible, available donors in the same district
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = requestSchema.safeParse(body);
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // --- Location-wise + blood-group-wise donor matching & notification ---
+  // donor matching: compatible blood group + same district
   const compatibleGroups = compatibleDonorGroups(r.bloodGroup);
   const candidates = await db.donor.findMany({
     where: { available: true, bloodGroup: { in: compatibleGroups } },
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
   );
 
   const urgencyLabel =
-    r.urgency === "URGENT" ? "URGENT" : r.urgency === "WITHIN_24H" ? "needed within 24 hours" : "planned request";
+    r.urgency === "URGENT" ? "urgent" : r.urgency === "WITHIN_24H" ? "needed within 24 hours" : "planned request";
 
   if (matched.length > 0) {
     await db.notification.createMany({
@@ -94,8 +94,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Simulated SMS dispatch (records above use channel=SMS).
-  // Real SMS: plug an SMS gateway API (e.g. Twilio / local provider) here and send to matched donor phones.
+  // alerts are only simulated — wire a real SMS gateway (Twilio, local provider) here
 
   return NextResponse.json({ request, notified: matched.length }, { status: 201 });
 }
