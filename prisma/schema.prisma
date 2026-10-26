@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A person who is willing to donate blood
+model Donor {
+  id           String         @id @default(cuid())
+  name         String
+  phone        String
+  bloodGroup   String // A+, A-, B+, B-, AB+, AB-, O+, O-
+  district     String // location (district/city)
+  area         String? // optional detail, e.g. neighbourhood
+  lastDonation DateTime?
+  available    Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  notifications Notification[]
+}
+
+// A post from someone who needs blood
+model BloodRequest {
+  id          String   @id @default(cuid())
+  patientName String
+  bloodGroup  String
+  district    String
+  hospital    String
+  urgency     String   @default("NORMAL") // URGENT | WITHIN_24H | NORMAL
+  units       Int      @default(1)
+  contactName String
+  phone       String
+  note        String?
+  neededBy    DateTime?
+  status      String   @default("OPEN") // OPEN | FULFILLED
+  createdAt   DateTime @default(now())
+}
+
+// In-site contact messages (contact form / message a donor / respond to request)
+model Message {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  subject   String?
+  content   String
+  createdAt DateTime @default(now())
+}
+
+// Notification sent to a donor when a matching request appears
+model Notification {
+  id        String       @id @default(cuid())
+  donorId   String
+  donor     Donor        @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  requestId String
+  title     String
+  body      String
+  channel   String       @default("IN_APP") // IN_APP | SMS
+  smsStatus String       @default("SIMULATED") // SIMULATED | SENT | FAILED
+  read      Boolean      @default(false)
+  createdAt DateTime     @default(now())
+
+  @@index([donorId])
+}
