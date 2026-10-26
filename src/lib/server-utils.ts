@@ -5,6 +5,6 @@ export function requireAdmin(req: NextRequest): boolean {
   return req.headers.get("x-admin-key") === ADMIN_PASSWORD;
 }
 
-export function normalizePhone(p: string): string {
-  return p.replace(/[\s\-()+]/g, "");
+export function normalizePhone(phone: string): string {
+  return phone.replace(/[\s\-()+]/g, "");
 }

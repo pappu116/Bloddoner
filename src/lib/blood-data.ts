@@ -19,8 +19,8 @@ export const COMPATIBILITY: Record<string, string[]> = {
   "O-": ["O-"],
 };
 
-export function compatibleDonorGroups(requestGroup: string): string[] {
-  return COMPATIBILITY[requestGroup] ?? [requestGroup];
+export function compatibleDonorGroups(requestedBloodGroup: string): string[] {
+  return COMPATIBILITY[requestedBloodGroup] ?? [requestedBloodGroup];
 }
 
 export const URGENCY = {
@@ -33,6 +33,6 @@ export type UrgencyKey = keyof typeof URGENCY;
 
 export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
-export function normalizeLocation(s: string): string {
-  return s.trim().toLowerCase().replace(/\s+/g, " ");
+export function normalizeLocation(location: string): string {
+  return location.trim().toLowerCase().replace(/\s+/g, " ");
 }

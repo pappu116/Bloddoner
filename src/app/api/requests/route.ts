@@ -19,10 +19,10 @@ const requestSchema = z.object({
 
 // district is matched loosely (case/spacing), so it's filtered after the query
 export async function GET(req: NextRequest) {
-  const sp = req.nextUrl.searchParams;
-  const status = sp.get("status");
-  const bloodGroup = sp.get("bloodGroup") || undefined;
-  const district = sp.get("district") || undefined;
+  const searchParams = req.nextUrl.searchParams;
+  const status = searchParams.get("status");
+  const bloodGroup = searchParams.get("bloodGroup") || undefined;
+  const district = searchParams.get("district") || undefined;
 
   const requests = await db.bloodRequest.findMany({
     where: {
@@ -32,12 +32,12 @@ export async function GET(req: NextRequest) {
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
   });
 
-  const filtered = requests.filter((r) => {
-    if (district && normalizeLocation(r.district) !== normalizeLocation(district)) return false;
+  const filteredRequests = requests.filter((request) => {
+    if (district && normalizeLocation(request.district) !== normalizeLocation(district)) return false;
     return true;
   });
 
-  return NextResponse.json({ requests: filtered });
+  return NextResponse.json({ requests: filteredRequests });
 }
 
 // POST — creates the request and alerts compatible, available donors in the same district
@@ -47,47 +47,51 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid form data", details: parsed.error.flatten() }, { status: 400 });
   }
-  const r = parsed.data;
+  const requestData = parsed.data;
 
   const request = await db.bloodRequest.create({
     data: {
-      patientName: r.patientName.trim(),
-      bloodGroup: r.bloodGroup,
-      district: r.district.trim(),
-      hospital: r.hospital.trim(),
-      urgency: r.urgency,
-      units: r.units,
-      contactName: r.contactName.trim(),
-      phone: r.phone.trim(),
-      note: r.note?.trim() || null,
-      neededBy: r.neededBy ? new Date(r.neededBy) : null,
+      patientName: requestData.patientName.trim(),
+      bloodGroup: requestData.bloodGroup,
+      district: requestData.district.trim(),
+      hospital: requestData.hospital.trim(),
+      urgency: requestData.urgency,
+      units: requestData.units,
+      contactName: requestData.contactName.trim(),
+      phone: requestData.phone.trim(),
+      note: requestData.note?.trim() || null,
+      neededBy: requestData.neededBy ? new Date(requestData.neededBy) : null,
       status: "OPEN",
     },
   });
 
   // donor matching: compatible blood group + same district
-  const compatibleGroups = compatibleDonorGroups(r.bloodGroup);
+  const compatibleGroups = compatibleDonorGroups(requestData.bloodGroup);
   const candidates = await db.donor.findMany({
     where: { available: true, bloodGroup: { in: compatibleGroups } },
   });
 
-  const matched = candidates.filter(
-    (d) => normalizeLocation(d.district) === normalizeLocation(r.district)
+  const matchedDonors = candidates.filter(
+    (donor) => normalizeLocation(donor.district) === normalizeLocation(requestData.district)
   );
 
   const urgencyLabel =
-    r.urgency === "URGENT" ? "urgent" : r.urgency === "WITHIN_24H" ? "needed within 24 hours" : "planned request";
+    requestData.urgency === "URGENT"
+      ? "urgent"
+      : requestData.urgency === "WITHIN_24H"
+        ? "needed within 24 hours"
+        : "planned request";
 
-  if (matched.length > 0) {
+  if (matchedDonors.length > 0) {
     await db.notification.createMany({
-      data: matched.map((d) => ({
-        donorId: d.id,
+      data: matchedDonors.map((donor) => ({
+        donorId: donor.id,
         requestId: request.id,
-        title: `Blood needed: ${r.bloodGroup} at ${r.hospital}`,
+        title: `Blood needed: ${requestData.bloodGroup} at ${requestData.hospital}`,
         body:
-          d.bloodGroup === r.bloodGroup
-            ? `A ${r.bloodGroup} blood request (${r.units} unit${r.units > 1 ? "s" : ""}) was posted for ${r.patientName} at ${r.hospital}, ${r.district} — ${urgencyLabel}. Contact: ${r.contactName} (${r.phone}).`
-            : `Your blood group ${d.bloodGroup} is compatible with requested ${r.bloodGroup}. Patient ${r.patientName} at ${r.hospital}, ${r.district} — ${urgencyLabel}. Contact: ${r.contactName} (${r.phone}).`,
+          donor.bloodGroup === requestData.bloodGroup
+            ? `A ${requestData.bloodGroup} blood request (${requestData.units} unit${requestData.units > 1 ? "s" : ""}) was posted for ${requestData.patientName} at ${requestData.hospital}, ${requestData.district} — ${urgencyLabel}. Contact: ${requestData.contactName} (${requestData.phone}).`
+            : `Your blood group ${donor.bloodGroup} is compatible with requested ${requestData.bloodGroup}. Patient ${requestData.patientName} at ${requestData.hospital}, ${requestData.district} — ${urgencyLabel}. Contact: ${requestData.contactName} (${requestData.phone}).`,
         channel: "SMS",
         smsStatus: "SIMULATED",
       })),
@@ -96,5 +100,5 @@ export async function POST(req: NextRequest) {
 
   // alerts are only simulated — wire a real SMS gateway (Twilio, local provider) here
 
-  return NextResponse.json({ request, notified: matched.length }, { status: 201 });
+  return NextResponse.json({ request, notified: matchedDonors.length }, { status: 201 });
 }

@@ -10,7 +10,7 @@ const messageSchema = z.object({
   content: z.string().min(2).max(1000),
 });
 
-// GET is admin only, POST is the public contact form
+// Message viewing is admin-only; the public can submit messages through POST.
 export async function GET(req: NextRequest) {
   if (!requireAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const messages = await db.message.findMany({ orderBy: { createdAt: "desc" } });
@@ -23,13 +23,13 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid form data", details: parsed.error.flatten() }, { status: 400 });
   }
-  const m = parsed.data;
+  const messageData = parsed.data;
   const message = await db.message.create({
     data: {
-      name: m.name.trim(),
-      phone: m.phone.trim(),
-      subject: m.subject?.trim() || null,
-      content: m.content.trim(),
+      name: messageData.name.trim(),
+      phone: messageData.phone.trim(),
+      subject: messageData.subject?.trim() || null,
+      content: messageData.content.trim(),
     },
   });
   return NextResponse.json({ message }, { status: 201 });

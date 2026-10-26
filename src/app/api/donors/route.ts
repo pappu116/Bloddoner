@@ -15,11 +15,11 @@ const donorSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const sp = req.nextUrl.searchParams;
-  const bloodGroup = sp.get("bloodGroup") || undefined;
-  const district = sp.get("district") || undefined;
-  const search = sp.get("search") || undefined;
-  const availableOnly = sp.get("available") === "true";
+  const searchParams = req.nextUrl.searchParams;
+  const bloodGroup = searchParams.get("bloodGroup") || undefined;
+  const district = searchParams.get("district") || undefined;
+  const search = searchParams.get("search") || undefined;
+  const availableOnly = searchParams.get("available") === "true";
 
   const donors = await db.donor.findMany({
     where: {
@@ -29,17 +29,18 @@ export async function GET(req: NextRequest) {
     orderBy: [{ available: "desc" }, { createdAt: "desc" }],
   });
 
-  const filtered = donors.filter((d) => {
-    if (district && normalizeLocation(d.district) !== normalizeLocation(district)) return false;
+  const filteredDonors = donors.filter((donor) => {
+    if (district && normalizeLocation(donor.district) !== normalizeLocation(district)) return false;
     if (search) {
-      const q = search.toLowerCase();
-      const hay = `${d.name} ${d.district} ${d.area ?? ""} ${d.bloodGroup}`.toLowerCase();
-      if (!hay.includes(q)) return false;
+      const normalizedSearch = search.toLowerCase();
+      const searchableDonorDetails =
+        `${donor.name} ${donor.district} ${donor.area ?? ""} ${donor.bloodGroup}`.toLowerCase();
+      if (!searchableDonorDetails.includes(normalizedSearch)) return false;
     }
     return true;
   });
 
-  return NextResponse.json({ donors: filtered });
+  return NextResponse.json({ donors: filteredDonors });
 }
 
 export async function POST(req: NextRequest) {
@@ -48,16 +49,16 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid form data", details: parsed.error.flatten() }, { status: 400 });
   }
-  const d = parsed.data;
+  const donorData = parsed.data;
   const donor = await db.donor.create({
     data: {
-      name: d.name.trim(),
-      phone: d.phone.trim(),
-      bloodGroup: d.bloodGroup,
-      district: d.district.trim(),
-      area: d.area?.trim() || null,
-      lastDonation: d.lastDonation ? new Date(d.lastDonation) : null,
-      available: d.available ?? true,
+      name: donorData.name.trim(),
+      phone: donorData.phone.trim(),
+      bloodGroup: donorData.bloodGroup,
+      district: donorData.district.trim(),
+      area: donorData.area?.trim() || null,
+      lastDonation: donorData.lastDonation ? new Date(donorData.lastDonation) : null,
+      available: donorData.available ?? true,
     },
   });
   return NextResponse.json({ donor }, { status: 201 });
@@ -66,8 +67,8 @@ export async function POST(req: NextRequest) {
 // admin only
 export async function DELETE(req: NextRequest) {
   if (!requireAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const id = req.nextUrl.searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
-  await db.donor.delete({ where: { id } });
+  const donorId = req.nextUrl.searchParams.get("id");
+  if (!donorId) return NextResponse.json({ error: "id required" }, { status: 400 });
+  await db.donor.delete({ where: { id: donorId } });
   return NextResponse.json({ ok: true });
 }

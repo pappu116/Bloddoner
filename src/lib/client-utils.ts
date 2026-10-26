@@ -7,7 +7,7 @@ export function getSavedPhone(): string {
   return window.localStorage.getItem(KEY) ?? "";
 }
 
-export function savePhone(phone: string) {
+export function savePhone(phone: string): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(KEY, phone);
 }

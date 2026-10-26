@@ -7,23 +7,23 @@ const patchSchema = z.object({
   status: z.enum(["OPEN", "FULFILLED"]),
 });
 
-export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const { id } = await ctx.params;
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id: requestId } = await context.params;
   const body = await req.json().catch(() => null);
-  const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+  const updateData = patchSchema.safeParse(body);
+  if (!updateData.success) return NextResponse.json({ error: "Invalid data" }, { status: 400 });
 
   const request = await db.bloodRequest.update({
-    where: { id },
-    data: { status: parsed.data.status },
+    where: { id: requestId },
+    data: { status: updateData.data.status },
   });
   return NextResponse.json({ request });
 }
 
 // admin only
-export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   if (!requireAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id } = await ctx.params;
-  await db.bloodRequest.delete({ where: { id } });
+  const { id: requestId } = await context.params;
+  await db.bloodRequest.delete({ where: { id: requestId } });
   return NextResponse.json({ ok: true });
 }

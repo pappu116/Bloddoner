@@ -54,10 +54,13 @@ export function HomeView({ onNavigate }: HomeViewProps) {
       .catch(() => {});
     fetch("/api/requests?status=OPEN")
       .then((r) => r.json())
-      .then((d) => {
-        const open: BloodRequest[] = d.requests ?? [];
-        const urgentFirst = open
-          .sort((a, b) => (a.urgency === "URGENT" ? -1 : 1) - (b.urgency === "URGENT" ? -1 : 1))
+      .then((responseData) => {
+        const openRequests: BloodRequest[] = responseData.requests ?? [];
+        const urgentFirst = openRequests
+          .sort(
+            (firstRequest, secondRequest) =>
+              Number(secondRequest.urgency === "URGENT") - Number(firstRequest.urgency === "URGENT")
+          )
           .slice(0, 3);
         setUrgent(urgentFirst);
       })
@@ -74,11 +77,17 @@ export function HomeView({ onNavigate }: HomeViewProps) {
   return (
     <div>
       <section className="hero-glow bg-tech-grid relative overflow-hidden">
-        {DROP_POSITIONS.map((p, i) => (
+        {DROP_POSITIONS.map((dropPosition, index) => (
           <Droplet
-            key={i}
+            key={index}
             className="animate-drop-float absolute text-primary/40"
-            style={{ left: p.left, top: p.top, animationDelay: p.delay, width: p.size, height: p.size }}
+            style={{
+              left: dropPosition.left,
+              top: dropPosition.top,
+              animationDelay: dropPosition.delay,
+              width: dropPosition.size,
+              height: dropPosition.size,
+            }}
             aria-hidden
           />
         ))}

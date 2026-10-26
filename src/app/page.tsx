@@ -31,15 +31,15 @@ export default function Home() {
         })
         .catch(() => {});
     check();
-    const t = setInterval(check, 20000);
+    const refreshTimer = setInterval(check, 20000);
     return () => {
       active = false;
-      clearInterval(t);
+      clearInterval(refreshTimer);
     };
   }, [savedPhone]);
 
-  const navigate = useCallback((v: ViewKey) => {
-    setView(v);
+  const navigate = useCallback((nextView: ViewKey) => {
+    setView(nextView);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 

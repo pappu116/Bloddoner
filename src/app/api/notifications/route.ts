@@ -5,18 +5,18 @@ import { normalizePhone, requireAdmin } from "@/lib/server-utils";
 
 // GET ?phone=… for a donor's inbox, ?all=1 for the admin SMS log
 export async function GET(req: NextRequest) {
-  const sp = req.nextUrl.searchParams;
+  const searchParams = req.nextUrl.searchParams;
 
-  if (sp.get("all") === "1") {
+  if (searchParams.get("all") === "1") {
     if (!requireAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const all = await db.notification.findMany({
+    const notifications = await db.notification.findMany({
       include: { donor: { select: { name: true, phone: true, district: true, bloodGroup: true } } },
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json({ notifications: all });
+    return NextResponse.json({ notifications });
   }
 
-  const phone = sp.get("phone");
+  const phone = searchParams.get("phone");
   if (!phone) return NextResponse.json({ error: "phone required" }, { status: 400 });
 
   const donor = await db.donor.findFirst({
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     donor: { id: donor.id, name: donor.name, bloodGroup: donor.bloodGroup },
     notifications: donor.notifications,
-    unread: donor.notifications.filter((n) => !n.read).length,
+    unread: donor.notifications.filter((notification) => !notification.read).length,
   });
 }
 
